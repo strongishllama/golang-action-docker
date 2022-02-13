@@ -1,0 +1,15 @@
+name: Golang Action
+description: A template repository for writing custom GitHub Actions in Golang.
+author: Taliesin Millhouse
+
+inputs:
+  example-input:
+    description: "An example input to use in your action."
+    required: true
+
+runs:
+  using: node16
+  main: invoke-binary.js
+branding:
+  icon: terminal
+  color: gray-dark

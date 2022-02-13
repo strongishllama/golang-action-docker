@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - bin/**
+      - "**.md"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - bin/**
+      - "**.md"
+
+jobs:
+  lint:
+    name: Lint
+    uses: strongishllama/github-actions/.github/workflows/golang-lint.yaml@main
+  generate-readme:
+    needs:
+      - lint
+    name: Generate Readme
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Generate Readme
+        run: |
+          curl -Lo ./gha-docs.tar.gz https://github.com/matty-rose/gha-docs/releases/download/v0.15.2/gha-docs-v0.15.2-linux-amd64.tar.gz
+          tar -xzf gha-docs.tar.gz gha-docs
+          chmod +x gha-docs
+          ./gha-docs generate -o README.md action.yaml
+      - name: Commit Readme
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: main
+          commit_message: "docs: automated update of README.md"
+          commit_user_name: GitHub Actions
+          commit_user_email: github-actions@millhouse.dev
+          file_pattern: README.md
+  build-binaries:
+    needs:
+      - lint
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.17
+      - name: Build Binaries
+        run: ./build-all.sh
+      - name: Commit Binaries
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: main
+          commit_message: "ci: automated build of binaries"
+          commit_user_name: GitHub Actions
+          commit_user_email: github-actions@millhouse.dev
+          file_pattern: bin/
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs:
+      - generate-readme
+      - build-binaries
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+      - name: Install AutoTag
+        run: curl -sL https://git.io/autotag-install | sudo sh -s -- -b /usr/bin
+      - name: Create Release
+        run: |
+          if [[ v$(autotag -n) == *"v0."* ]]; then
+            gh release create $(autotag -n) --generate-notes --prerelease
+          else
+            gh release create $(autotag -n) --generate-notes
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

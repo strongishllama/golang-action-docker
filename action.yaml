@@ -1,5 +1,5 @@
-name: Golang Action
-description: A template repository for writing custom GitHub Actions in Golang.
+name: Golang Action Docker
+description: A template repository for writing custom GitHub Actions in Golang with Docker.
 author: Taliesin Millhouse
 
 inputs:
@@ -8,8 +8,9 @@ inputs:
     required: true
 
 runs:
-  using: node16
-  main: invoke-binary.js
+  using: docker
+  image: Dockerfile
+
 branding:
   icon: terminal
   color: gray-dark

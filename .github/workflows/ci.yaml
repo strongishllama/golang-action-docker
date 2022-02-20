@@ -18,6 +18,17 @@ jobs:
   lint:
     name: Lint
     uses: strongishllama/github-actions/.github/workflows/golang-lint.yaml@main
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build Docker Container
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          tags: strongishllama/golang-action-docker:latest
   generate-readme:
     needs:
       - lint
@@ -41,49 +52,49 @@ jobs:
           commit_user_name: GitHub Actions
           commit_user_email: github-actions@millhouse.dev
           file_pattern: README.md
-  build-binaries:
-    needs:
-      - lint
-    name: Build Binaries
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Setup Golang
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.17
-      - name: Build Binaries
-        run: ./build-all.sh
-      - name: Commit Binaries
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          branch: main
-          commit_message: "ci: automated build of binaries"
-          commit_user_name: GitHub Actions
-          commit_user_email: github-actions@millhouse.dev
-          file_pattern: bin/
-  release:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs:
-      - generate-readme
-      - build-binaries
-    name: Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: "0"
-      - name: Install AutoTag
-        run: curl -sL https://git.io/autotag-install | sudo sh -s -- -b /usr/bin
-      - name: Create Release
-        run: |
-          if [[ v$(autotag -n) == *"v0."* ]]; then
-            gh release create $(autotag -n) --generate-notes --prerelease
-          else
-            gh release create $(autotag -n) --generate-notes
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # build-binaries:
+  #   needs:
+  #     - lint
+  #   name: Build Binaries
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #     - name: Setup Golang
+  #       uses: actions/setup-go@v2
+  #       with:
+  #         go-version: ^1.17
+  #     - name: Build Binaries
+  #       run: ./build-all.sh
+  #     - name: Commit Binaries
+  #       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #       uses: stefanzweifel/git-auto-commit-action@v4
+  #       with:
+  #         branch: main
+  #         commit_message: "ci: automated build of binaries"
+  #         commit_user_name: GitHub Actions
+  #         commit_user_email: github-actions@millhouse.dev
+  #         file_pattern: bin/
+  # release:
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   needs:
+  #     - generate-readme
+  #     - build-binaries
+  #   name: Release
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: "0"
+  #     - name: Install AutoTag
+  #       run: curl -sL https://git.io/autotag-install | sudo sh -s -- -b /usr/bin
+  #     - name: Create Release
+  #       run: |
+  #         if [[ v$(autotag -n) == *"v0."* ]]; then
+  #           gh release create $(autotag -n) --generate-notes --prerelease
+  #         else
+  #           gh release create $(autotag -n) --generate-notes
+  #         fi
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

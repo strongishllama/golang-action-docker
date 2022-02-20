@@ -1,5 +1,5 @@
-# Golang Action
-A template repository for writing custom GitHub Actions in Golang.
+# Golang Action Docker
+A template repository for writing custom GitHub Actions in Golang with Docker.
 
 ## Inputs
 | Name | Description | Required | Default |
@@ -14,7 +14,7 @@ No external actions.
 
 ## Example Usage
 ```yaml
-- name: Golang Action
+- name: Golang Action Docker
   uses: owner/repo@latest
   with:
     # An example input to use in your action.

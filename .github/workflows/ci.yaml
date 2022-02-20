@@ -30,6 +30,7 @@ jobs:
   generate-readme:
     needs:
       - lint
+      - test
     name: Generate Readme
     runs-on: ubuntu-latest
     steps:

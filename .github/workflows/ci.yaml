@@ -67,9 +67,9 @@ jobs:
       - name: Create Release
         run: |
           if [[ v$(autotag -n) == *"v0."* ]]; then
-            gh release create $(autotag -n) --generate-notes --prerelease
+            gh release create v$(autotag -n) --generate-notes --prerelease
           else
-            gh release create $(autotag -n) --generate-notes
+            gh release create v$(autotag -n) --generate-notes
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

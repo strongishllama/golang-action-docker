@@ -80,14 +80,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build-and-push-docker-image:
-    needs:
-      - release
     name: Build & Push Docker Image
     uses: strongishllama/github-actions/.github/workflows/docker-build-and-push-image.yaml@main
     with:
       registry: ghcr.io
       image-name: ${{ github.repository }}
       username: ${{ github.actor }}
-      tags: ghcr.io/${{ github.repository }}:$BUMPED_TAG,ghcr.io/${{ github.repository }}:latest
+      tags: ghcr.io/${{ github.repository }}:${{ env.BUMPED_TAG }},ghcr.io/${{ github.repository }}:latest
     secrets:
       password: ${{ secrets.GITHUB_TOKEN }}

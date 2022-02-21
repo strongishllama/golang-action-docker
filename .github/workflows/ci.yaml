@@ -12,10 +12,6 @@ on:
     paths-ignore:
       - "**.md"
 
-env:
-  DOCKER_REGISTRY: ghcr.io
-
-
 jobs:
   lint:
     name: Lint
@@ -87,9 +83,9 @@ jobs:
     name: Build & Push Docker Image
     uses: strongishllama/github-actions/.github/workflows/docker-build-and-push-image.yaml@main
     with:
-      registry: ${{ env.DOCKER_REGISTRY }}
+      registry: ghcr.io
       image-name: ${{ github.repository }}
       username: ${{ github.actor }}
-      tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository }}:$BUMPED_TAG,${{ env.DOCKER_REGISTRY }}/${{ github.repository }}:latest
+      tags: ghcr.io/${{ github.repository }}:$BUMPED_TAG,ghcr.io/${{ github.repository }}:latest
     secrets:
       password: ${{ secrets.GITHUB_TOKEN }}

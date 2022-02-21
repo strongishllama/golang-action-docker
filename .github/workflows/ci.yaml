@@ -64,16 +64,18 @@ jobs:
           fetch-depth: "0"
       - name: Install AutoTag
         run: curl -sL https://git.io/autotag-install | sudo sh -s -- -b /usr/bin
+      - name: Bump Tag
+        run: echo "BUMPED_TAG=v$(autotag -n)" >> $GITHUB_ENV
       - name: Create Tag
         run: |
-          git tag $(autotag -n)
+          git tag $BUMPED_TAG
           git push --tags
       - name: Create Release
         run: |
-          if [[ v$(autotag -n) == *"v0."* ]]; then
-            gh release create v$(autotag -n) --generate-notes --prerelease
+          if [[ $BUMPED_TAG == *"v0."* ]]; then
+            gh release create $BUMPED_TAG --generate-notes --prerelease
           else
-            gh release create v$(autotag -n) --generate-notes
+            gh release create $BUMPED_TAG --generate-notes
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -51,11 +51,11 @@ jobs:
           commit_user_name: GitHub Actions
           commit_user_email: github-actions@millhouse.dev
           file_pattern: README.md
-  release:
+  bump-tag:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs:
       - generate-readme
-    name: Release
+    name: Bump Tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -64,18 +64,42 @@ jobs:
           fetch-depth: "0"
       - name: Install AutoTag
         run: curl -sL https://git.io/autotag-install | sudo sh -s -- -b /usr/bin
-      - name: Bump Tag
-        run: echo "BUMPED_TAG=v$(autotag -n)" >> $GITHUB_ENV
+      - name: Run AutoTag
+        id: auto-tag
+        run: echo "::set-output name=bumped-tag=v$(autotag -n)"
+    outputs:
+      bumped-tag: ${{ steps.auto-tag.outputs.bumped-tag }}
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs:
+      - bump-tag
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
       - name: Create Tag
         run: |
-          git tag $BUMPED_TAG
+          git tag ${{ needs.bump-tag.outputs.bumped-tag }}
           git push --tags
       - name: Create Release
         run: |
-          if [[ $BUMPED_TAG == *"v0."* ]]; then
-            gh release create $BUMPED_TAG --generate-notes --prerelease
+          if [[ ${{ needs.bump-tag.outputs.bumped-tag }} == *"v0."* ]]; then
+            gh release create ${{ needs.bump-tag.outputs.bumped-tag }} --generate-notes --prerelease
           else
-            gh release create $BUMPED_TAG --generate-notes
+            gh release create ${{ needs.bump-tag.outputs.bumped-tag }} --generate-notes
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-and-push-docker-image:
+    needs:
+      - bump-tag
+    name: Build & Push Docker Image
+    uses: strongishllama/github-actions/.github/workflows/docker-build-and-push-image.yaml@main
+    with:
+      registry: ghcr.io
+      image-name: ${{ github.repository }}
+      username: ${{ github.actor }}
+      tags: ghcr.io/${{ github.repository }}:${{ needs.bump-tag.outputs.bumped-tag }},ghcr.io/${{ github.repository }}:latest
+    secrets:
+      password: ${{ secrets.GITHUB_TOKEN }}
